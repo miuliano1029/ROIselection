@@ -1,10 +1,11 @@
-//2024: UPDATE by MI. This macro was modified for a few reasons. 
+//2024: UPDATE by M.Iuliano. This macro was modified for a few reasons. 
 //(1) Scale for length measurements was from a previous correction. Macro now prompts for image scale at the beginning, allowing for use across different images.
 //(2) Naming ROIs individually, making it easier to identify the appropriate item if one needs to go back and re-measure lengths.
 //(3) This now allow you to set an input folder rather than opening up each file individually. However, you need to start with a folder containing only the TIF files
 //(4) Option to record LENGTH, AREA, or BOTH
 
-//this macro is to select ROI and split them by channel, saving each channel in individual folders
+//this macro is to select ROI and split them by channel, saving each channel and a merged version in their own folders
+//works for 2 and 3 channel images.
 
 //the basic process is that it asks you to open all the images you want ROI from, select a folder
 //to save the output ROI images in (creating subfolders for each channel) as well as the zip file
@@ -138,7 +139,16 @@ function	ROIlength(){
 		selectWindow(title);
 		c=c+1;
 	}
-run("Merge Channels...", "c1=Red c2=Green c3=Blue create ignore");
+if (numChan == 2){
+	run("Merge Channels...", "c1=Red c2=Green create ignore");
+	saveAs("Tiff", mergedir +title+" "+num);
+	close();
+}
+if (numChan == 3){
+	run("Merge Channels...", "c1=Red c2=Green c3=Blue create ignore");
+	saveAs("Tiff", mergedir +title+" "+num);
+	close();
+}
 saveAs("Tiff", mergedir +title+" "+num);
 close();
 	selectWindow(title);
@@ -178,7 +188,16 @@ function ROIarea(){
 		selectWindow(title);
 		c=c+1;
 	}
-run("Merge Channels...", "c1=Red c2=Green c3=Blue create ignore");
+if (numChan == 2){
+	run("Merge Channels...", "c1=Red c2=Green create ignore");
+	saveAs("Tiff", mergedir +title+" "+num);
+	close();
+}
+if (numChan == 3){
+	run("Merge Channels...", "c1=Red c2=Green c3=Blue create ignore");
+	saveAs("Tiff", mergedir +title+" "+num);
+	close();
+}
 saveAs("Tiff", mergedir +title+" "+num);
 close();
 selectWindow(title);
@@ -214,9 +233,16 @@ function ROIboth(){
 		selectWindow(title);
 		c=c+1;
 	}
-run("Merge Channels...", "c1=Red c2=Green c3=Blue create ignore");
-saveAs("Tiff", mergedir +title+" "+num);
-close();
+if (numChan == 2){
+	run("Merge Channels...", "c1=Red c2=Green create ignore");
+	saveAs("Tiff", mergedir +title+" "+num);
+	close();
+}
+if (numChan == 3){
+	run("Merge Channels...", "c1=Red c2=Green c3=Blue create ignore");
+	saveAs("Tiff", mergedir +title+" "+num);
+	close();
+}
 	selectWindow(title);
 	setTool("polyline");
 		waitForUser ("Measure dendrite length");
