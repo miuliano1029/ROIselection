@@ -1,0 +1,131 @@
+//allows to apply existing ROI files to images and generate new images of channels and/or merge
+//searches and matches files from roi folder based on image title string
+
+input = getDirectory("Choose folder for starting images");
+File.setDefaultDir(input);
+roidir = getDirectory("Choose folder for ROI files");
+output=getDirectory("Choose output folder");
+list = getFileList(input);
+list = Array.sort(list);
+roilist=getFileList(roidir);
+roilist=Array.sort(roilist);
+suffix = ".tif";
+print("\\Clear")
+roiManager("reset");
+//suffix- File names of the images and the ROIs should match to some extent. 
+//The image file name allows to shorten the test criteria to identify the appropriate .zip file, as thresholding macro could add to the file name
+Dialog.create("Experiment Info");
+		Dialog.addNumber("Pixel Scale:", 0.10049847,8,5,"(um/pixel)");
+	Dialog.addNumber("How many starting channels?",4,0,1,"channel/s");
+	Dialog.addNumber("How many final channels?",4,0,1,"channel/s");
+	Dialog.addString("File Suffix", ".tif");
+Dialog.show();
+scale = Dialog.getNumber();
+numChan = Dialog.getNumber();
+mergeChan= Dialog.getNumber();
+suffix= Dialog.getString();
+Dialog.create("Assign Colors to Each Channel");
+	channels = newArray("Cyan","Green","Blue","Red");
+	chan= newArray("C1","C2","C3","C4");
+	color=Array.trim(channels, numChan);
+	for(n=0;n<numChan;n++){
+		Dialog.addChoice("Channel "+(n+1),color,color[n]);
+		Dialog.addString("", "Staining");
+	}
+			Dialog.addMessage("Merged file order channels to R-G-B-C");
+			Dialog.addMessage("2=RG 3=RGB 4=RGBC");
+		
+Dialog.show();
+chanArray = newArray();
+signalArray=newArray();
+for(n=0;n<numChan;n++) {
+	chanArray = Array.concat(chanArray,Dialog.getChoice());
+	signalArray = Array.concat(signalArray,Dialog.getString());
+		if(File.exists(input+chanArray[n])!=1) {
+		File.makeDirectory(output+File.separator+chanArray[n]+" - "+signalArray[n]);
+}
+}
+
+oldchan = "Channel Organization\n";
+		for(n=0;n<numChan;n++) {
+			oldchan =oldchan+chanArray[n]+" = "+signalArray[n]+"\n";
+		}		
+		print(oldchan);
+			print("Merged file order channels to R-G-B-C");
+			print("2 Channel=RG 3 Channel=RGB 4 Channel=RGBC");
+
+merge = output+"Merge";
+File.makeDirectory(merge);
+
+
+for(f=0;f<list.length;f++)
+{
+	open(input+list[f]);
+	title=getTitle();
+	endindex=indexOf(title, suffix);
+	newtitle=substring(list[f],0,endindex);
+	processROI(roidir);
+}
+close("*");
+selectWindow("Results");
+//.csv of ROI area will be saved
+saveAs("Results",output+File.separator+"ROI Area.csv");
+selectWindow("Log");
+saveAs("Text", output+"Channel_Info.csv");
+
+function processROI(roidir) {
+	for (i = 0; i < roilist.length; i++) {
+		if(File.isDirectory(roidir + File.separator + roilist[i]))
+			processROI(roidir + File.separator + roilist[i]);
+		if(startsWith(roilist[i],newtitle)){
+			ROImeasure();
+		}
+	}
+}
+function ROImeasure(){
+roiManager("reset");
+roiManager("Open", roidir + File.separator + roilist[i]);
+run("Set Measurements...", "area area_fraction display redirect=None decimal=3");
+rename(newtitle);
+roiManager("Measure");
+		c=0;
+		for(l=0;l<numChan;l++) {	
+					setSlice(l+1);
+		run("Copy");
+		run("Internal Clipboard");
+		selectWindow("Clipboard");
+		run(chanArray[l]);
+		saveAs("Tiff", output+File.separator+chanArray[l]+" - "+signalArray[l]+File.separator+newtitle+signalArray[l]);
+		rename(chanArray[l]);
+		selectWindow(newtitle);
+		c=c+1;
+	}
+		savemerge();}
+	
+	
+function savemerge(){	
+if(mergeChan == 1){
+	selectImage("Red");
+saveAs("Tiff", merge+File.separator+newtitle);
+}
+if (mergeChan == 2){
+	run("Merge Channels...", "c1=Red c2=Green create ignore");
+	saveAs("Tiff", merge+File.separator+newtitle);
+	close();
+}
+if (mergeChan == 3){
+	run("Merge Channels...", "c1=Red c2=Green c3=Blue create ignore");
+	saveAs("Tiff", merge+File.separator+newtitle);
+	close();
+}
+if (mergeChan == 4){
+	run("Merge Channels...", "c1=Red c2=Green c3=Blue c4=Cyan create ignore");
+	saveAs("Tiff", merge+File.separator+newtitle);
+	close();
+}
+	selectWindow(newtitle);
+	close("\\Others");
+	close("*");
+	}
+
+roiManager("reset");
